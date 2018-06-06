@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  	<!-- Charset and load required libraries -->
+    <meta charset="utf-8">
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://dimplejs.org/dist/dimple.v2.0.0.min.js"></script>
+
+    <style>
+      /* Title */
+      h2 {
+        text-align: center;
+      }
+      /* Normal text */
+      div {
+      	text-align: justify;
+      }
+      /* Warning about browsers */
+      p {
+      	text-align: center;
+      	font-style: italic;
+      }
+    </style>
+
+    <script type="text/javascript">
+        "use strict"; // We must declare all variables
+        var margin = 50,
+          width = 1000 - margin,
+          height = 500 - margin;
+
+
+
+        /* This function creates the structure of the page, with the title, a
+        summary and two plots */
+        function draw(data) {
+            d3.select("body")
+            .append("h2")
+            .text("Baseball Statistics");
+
+            d3.select("body")
+            .append("div")
+            .text("Visualizations to represent various baseball statistics. "
+                  + "The below graphics will portray the fact that height does appear "
+                  + "to have a direct influence on the number of home runs and "
+                  + "batting average.  In addition, by evaluating data we can come "
+                  + "to the conclusion that handedness has direct correlation to "
+                  + "home run and batting averages.");
+
+            d3.select("body")
+              .append("p")
+            bar_line_plot(data);
+            line_bar(data);
+            
+        };
+
+        /* Plots a bar graph of bating average and home runs averaged by groups of
+        handedness  */
+        function bar_line_plot(data) {
+            var svg = d3.select("body")
+            .append("svg")
+              .attr("width", width + margin)
+              .attr("height", height + margin)
+            .append('g')
+                .attr('class', 'chart');
+
+            var myChart = new dimple.chart(svg, data);
+
+            // title bar
+            svg.append("text")
+		        .attr("x", myChart._xPixels() + myChart._widthPixels() / 2)
+		        .attr("y", myChart._yPixels() - 20)
+		        .style("text-anchor", "middle")
+		        .style("font-family", "sans-serif")
+		        .style("font-weight", "bold")
+            .style("font-size", "14")
+		        .text("Handedness factor in regards to number of HR and Batting Average");
+
+            // Create relevent X/Y axis based on handedness/HR and avg
+            var x = myChart.addCategoryAxis("x", "handedness");
+            x.title = "Players handedness (R: Right - L: Left - B: Both)";
+            var y1 = myChart.addMeasureAxis("y", "HR");
+            y1.title = "Average player HR";
+            var y2 = myChart.addMeasureAxis("y", "avg");
+            y2.title = "Average player batting avg";
+            y2.tickFormat = ',.2f';
+
+            // Add relevent series to the chart
+            myChart.addSeries("Home runs (HR)", dimple.plot.bar, [x, y1])
+            .aggregate = dimple.aggregateMethod.avg;
+            myChart.addSeries("Batting average (avg)", dimple.plot.line, [x, y2])
+            .aggregate = dimple.aggregateMethod.avg;
+            myChart.addSeries("Batting average (avg)", dimple.plot.bubble, [x, y2])
+            .aggregate = dimple.aggregateMethod.avg;
+            myChart.assignColor("Batting average", "red");
+            myChart.assignColor("Home runs (HR)", "green");
+
+            myChart.addLegend(500, 94, 100, 100, "left");
+
+            myChart.draw();
+        };
+
+        /* Plots a graph of bating average and home runs averaged by groups of
+        height */
+        function line_bar(data) {
+            var svg = d3.select("body")
+            .append("svg")
+              .attr("width", width + margin)
+              .attr("height", height + margin)
+            .append('g')
+                .attr('class', 'chart');
+
+            var myChart = new dimple.chart(svg, data);
+
+            // Add centered title
+            svg.append("text")
+		        .attr("x", myChart._xPixels() + myChart._widthPixels() / 2)
+		        .attr("y", myChart._yPixels() -25 )
+		        .style("text-anchor", "middle")
+		        .style("font-family", "sans-serif")
+		        .style("font-weight", "bold")
+		    .style("font-size", "14")
+		    .text("Height factor in regards to number of HR and Batting Average");
+
+
+
+            // Create main x and y axis and assign titles and numeric format
+            var x = myChart.addCategoryAxis("x", "height");
+            x.title = "Player height (inches)";
+            var y = myChart.addMeasureAxis("y", "avg");
+            y.title = "Batting Average";
+            y.tickFormat = ',.2f'; // Two decimal places
+            var y2 = myChart.addMeasureAxis("y", "HR");
+            y2.title = "HR Average";
+
+ 
+
+            // Add relevent series to the chart, in this case HR and batting average
+            var serie1 = myChart.addSeries("Home runs (HR)", dimple.plot.bar);
+            serie1.aggregate = dimple.aggregateMethod.avg;
+            myChart.addSeries("Batting average (avg)", dimple.plot.line)
+            .aggregate = dimple.aggregateMethod.avg;
+            myChart.assignColor("Batting average (avg)", "red");
+
+            // Tooltip
+            serie1.getTooltipText = function (e) {
+                return [
+                  e.aggField[0],
+                  "weight:" + e.x,
+                  "avg: " + e.y.toFixed(2),
+                  "HR: " + HR_weight(data, e.x).toFixed(2)
+              ];
+            };
+
+            myChart.addLegend(500, 50, 100, 100, "left");
+
+            myChart.draw();
+        };
+
+
+
+    </script>
+  </head>
+<body>
+  <script type="text/javascript">
+     // Specify the actual datafile to be processed and call the initial draw function
+      d3.csv("baseball_data.csv", draw);
+  </script>
+</body>
+</html>
